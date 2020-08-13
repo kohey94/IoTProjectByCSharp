@@ -1,6 +1,6 @@
-using System;
-using System.Threading;
 using System.Diagnostics;
+using System.Threading;
+using Windows.Devices.Gpio;
 
 namespace NanoFrameworkDemo
 {
@@ -10,7 +10,19 @@ namespace NanoFrameworkDemo
         {
             Debug.WriteLine("Hello from nanoFramework!");
 
-            Thread.Sleep(Timeout.Infinite);
+            var gpio = new GpioController();
+            var pin25 = gpio.OpenPin(25);
+            pin25.SetDriveMode(GpioPinDriveMode.Output);
+            Debug.WriteLine($"Pin number: {pin25.PinNumber}");
+            Debug.WriteLine($"Pin drive mode: {pin25.GetDriveMode()}");
+
+            while (true)
+            {
+                pin25.Write(GpioPinValue.High);
+                Thread.Sleep(500);
+                pin25.Write(GpioPinValue.Low);
+                Thread.Sleep(500);
+            }
 
             // Browse our samples repository: https://github.com/nanoframework/samples
             // Check our documentation online: https://docs.nanoframework.net/
