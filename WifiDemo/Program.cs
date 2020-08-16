@@ -1,8 +1,10 @@
 using System;
-using System.Threading;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 using Windows.Devices.WiFi;
-
 
 namespace WifiDemo
 {
@@ -11,8 +13,10 @@ namespace WifiDemo
     /// </summary>
     public class Program
     {
+
         const string MYSSID = "";
         const string MYPASSWORD = "";
+
 
         public static void Main()
         {
@@ -26,13 +30,34 @@ namespace WifiDemo
                 // Set up the AvailableNetworksChanged event to pick up when scan has completed
                 wifi.AvailableNetworksChanged += Wifi_AvailableNetworksChanged;
 
-                // Loop forever scanning every 30 seconds
-                while (true)
-                {
-                    Debug.WriteLine("starting WiFi scan");
-                    wifi.ScanAsync();
+                Debug.WriteLine("starting WiFi scan");
+                wifi.ScanAsync();
+                
 
-                    Thread.Sleep(30000);
+                var remoteIp = IPAddress.Any;
+                var receivePort = 12345;
+
+                Debug.WriteLine("receive message");
+                
+                using (var udpReceive = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                {
+                    udpReceive.Bind(new IPEndPoint(remoteIp, receivePort));
+
+                    var resBytes = new byte[1024];
+
+                    while (true)
+                    {
+                        Debug.WriteLine("wait...");
+                        
+                        var resSize = udpReceive.Receive(resBytes);
+                        
+                        var receiveMsg = Encoding.UTF8.GetString(resBytes, 0 ,resSize);
+
+                        Debug.WriteLine($"receiveData   : {receiveMsg}");
+                        
+                        if (receiveMsg == "exit") break;
+                    }
+                    udpReceive.Close();
                 }
             }
             catch (Exception ex)
